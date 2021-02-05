@@ -1,8 +1,8 @@
 from tensorflow.keras import Model
 
-from Backbone import CSPDarknet53
-from Head import YOLOHead
-from Neck import PANet
+from .Backbone import CSPDarknet53
+from .Head import YOLOHead
+from .Neck import PANet
 
 
 class ADASEngine(Model):

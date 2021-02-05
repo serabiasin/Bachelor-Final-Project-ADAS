@@ -1,6 +1,6 @@
 from tensorflow.keras import layers, Model
 
-from NeuralNetBase import YOLOConv2D
+from .NeuralNetBase import YOLOConv2D
 
 
 class PANet(Model):

@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import layers, Model, Sequential
-from NeuralNetBase import YOLOConv2D
+from .NeuralNetBase import YOLOConv2D
 
 
 class _ResBlock(Model):
