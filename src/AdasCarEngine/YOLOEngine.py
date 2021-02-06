@@ -12,11 +12,10 @@ class YOLOEngine(Model):
                  xyscales,
                  activation0: str = "mish",
                  activation1: str = "leaky",
-                 cameraDir=None,
                  kernel_regularizer=None,
                  ):
 
-        super(ADASEngine,self).__init__()
+        super(YOLOEngine, self).__init__()
         self.csp_darknet53=CSPDarknet53(
             activation0=activation0,
             activation1=activation1,
