@@ -5,15 +5,17 @@ from .Head import YOLOHead
 from .Neck import PANet
 
 
-class ADASEngine(Model):
+class YOLOEngine(Model):
     def __init__(self,
                  anchors,
                  num_classes: int,
                  xyscales,
                  activation0: str = "mish",
                  activation1: str = "leaky",
+                 cameraDir=None,
                  kernel_regularizer=None,
                  ):
+
         super(ADASEngine,self).__init__()
         self.csp_darknet53=CSPDarknet53(
             activation0=activation0,
