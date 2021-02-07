@@ -4,16 +4,22 @@ from tensorflow.keras import activations, backend, layers, Model
 
 class YOLOHead(Model):
     def __init__(self,anchors,num_class,xyscale):
+        super(YOLOHead, self).__init__(name="YOLOHead")
         self.anchors=anchors
         self.grid_coord=[]
         self.grid_size=None
         self.image_width=None
-        self.num_class=num_class
+        self.num_classes = num_class
         self.scales = xyscale
 
         self.reshape0 = layers.Reshape((-1,))
         self.reshape1 = layers.Reshape((-1,))
         self.reshape2 = layers.Reshape((-1,))
+
+        self.concat0 = layers.Concatenate(axis=-1)
+        self.concat1 = layers.Concatenate(axis=-1)
+        self.concat2 = layers.Concatenate(axis=-1)
+
 
     def build(self,input_shape):
         # None, g_height, g_width,

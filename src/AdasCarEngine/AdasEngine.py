@@ -1,10 +1,9 @@
 from tensorflow.keras import backend, layers, optimizers
 import tensorflow as tf
-from YOLOEngine import YOLOEngine
 
 import numpy as np
 from typing import Union
-from .YOLOEngine import YOLOEngine
+from .YOLOEngine import YOLOVision
 import cv2
 
 class ADASEngine:
@@ -40,7 +39,7 @@ class ADASEngine:
 
         # height, width, channels
         inputs=layers.Input([self.input_size[1], self.input_size[0], 3])
-        self.model = YOLOEngine.YOLOv4(
+        self.model = YOLOVision(
                 anchors=self.anchors,
                 num_classes=len(self.classes),
                 xyscales=self.xyscales,
