@@ -40,12 +40,12 @@ if len(physical_devices) > 0:
     print("Call tf.config.experimental.set_memory_growth(GPU0, True)")
 
 
-class YOLOv4(BaseClass):
+class ADASEngine(BaseClass):
     def __init__(self, tiny: bool = False, tpu: bool = False):
         """
         Default configuration
         """
-        super(YOLOv4, self).__init__(tiny=tiny, tpu=tpu)
+        super(ADASEngine, self).__init__(tiny=tiny, tpu=tpu)
 
         self.batch_size = 32
         self._has_weights = False
@@ -373,3 +373,5 @@ class YOLOv4(BaseClass):
                             class_name, probability, left, top, right, bottom
                         )
                     )
+    def show_model(self):
+        self.model.summary()
