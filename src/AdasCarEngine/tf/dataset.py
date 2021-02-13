@@ -258,7 +258,6 @@ class Dataset:
         @return image / 255, bboxes
         """
         # pylint: disable=bare-except
-        print("Loading image and resize")
         try:
             image = cv2.imread(dataset[0])
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
