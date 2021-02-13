@@ -23,12 +23,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+
 from os import path
 import random
 from typing import Union
 
 import cv2
 import numpy as np
+import tensorflow as tf
 
 from . import train
 from ..common import media
@@ -46,6 +48,7 @@ class Dataset:
         label_smoothing: float = 0.1,
         num_classes: int = None,
         image_path_prefix: str = None,
+        label_path:str=None,
         strides: np.ndarray = None,
         xyscales: np.ndarray = None,
     ):
@@ -62,6 +65,7 @@ class Dataset:
         )
         self.input_size = input_size
         self.label_smoothing = label_smoothing
+        self.label_path = label_path
         self.image_path_prefix = image_path_prefix
         self.num_classes = num_classes
         self.xysclaes = xyscales
@@ -84,10 +88,12 @@ class Dataset:
         ]
 
         self.dataset = self.load_dataset()
-
+        print("Jumlah dataset : ",len(self.dataset))
         self.count = 0
         if self.data_augmentation:
             np.random.shuffle(self.dataset)
+    
+
 
     def load_dataset(self):
         """
@@ -125,7 +131,10 @@ class Dataset:
                             self.image_path_prefix, image_path
                         )
                     root, _ = path.splitext(image_path)
-                    with open(root + ".txt") as fd2:
+                    filenama=path.basename(root)
+                    label_target = path.join(self.label_path, filenama)
+                    print(label_target)
+                    with open(label_target + ".txt") as fd2:
                         bboxes = fd2.readlines()
                         xywhc_s = np.zeros((len(bboxes), 5))
                         for i, bbox in enumerate(bboxes):
@@ -137,6 +146,7 @@ class Dataset:
                                 bbox[0],
                             )
                         _dataset.append([image_path, xywhc_s])
+
 
         if len(_dataset) == 0:
             raise FileNotFoundError("Failed to find images")
@@ -248,6 +258,7 @@ class Dataset:
         @return image / 255, bboxes
         """
         # pylint: disable=bare-except
+        print("Loading image and resize")
         try:
             image = cv2.imread(dataset[0])
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)

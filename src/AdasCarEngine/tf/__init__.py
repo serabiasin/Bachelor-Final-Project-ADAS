@@ -47,9 +47,9 @@ class ADASEngine(BaseClass):
         """
         super(ADASEngine, self).__init__(tiny=tiny, tpu=tpu)
 
-        self.batch_size = 32
+        self.batch_size = 4
         self._has_weights = False
-        self.input_size = 608
+        self.input_size = 416
         self.model = None
 
     def make_model(
@@ -218,6 +218,7 @@ class ADASEngine(BaseClass):
     def load_dataset(
         self,
         dataset_path,
+        label_path=None,
         dataset_type="converted_coco",
         label_smoothing=0.1,
         image_path_prefix=None,
@@ -227,6 +228,7 @@ class ADASEngine(BaseClass):
             anchors=self.anchors,
             batch_size=self.batch_size,
             dataset_path=dataset_path,
+            label_path=label_path,
             dataset_type=dataset_type,
             data_augmentation=training,
             input_size=self.input_size,
