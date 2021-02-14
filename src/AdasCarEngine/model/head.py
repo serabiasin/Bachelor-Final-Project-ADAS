@@ -25,7 +25,9 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import activations, backend, layers, Model
 
-
+"""
+YOLO HEAD BERTANGGUNG JAWAB SEBAGAI OUTPUT LAYER (LOKALISASI DAN KLASIFIKASI)
+"""
 class YOLOv3Head(Model):
     def __init__(self, anchors, num_classes, xysclaes):
         super(YOLOv3Head, self).__init__(name="YOLOv3Head")
