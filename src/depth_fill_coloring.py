@@ -19,6 +19,7 @@ class KittiDepthFill:
         self.listValFile = []
         self.checkpointfill = OutputFolder
 
+        print("Scan file...")
         self.scanFolder()
 
     def getlistTrain(self):
@@ -54,7 +55,6 @@ class KittiDepthFill:
                 temp = os.path.join(output_val, filename_rgb)
 
                 cv2.imwrite(temp, filled_img)
-
 
     def scanFolder(self):
         #scan folder annotated
@@ -100,20 +100,44 @@ class KittiDepthFill:
         self.listTrainFile.sort()
         self.listValFile.sort()
 
+        self.listTrainFile = np.array(self.listTrainFile)
+        self.listValFile = np.array(self.listValFile)
+
     def fillTrain(self):
-        iteration=1
-        for path_file in self.getlistTrain():
-            self.beginFill(path_file, 0)
+        iteration = 1
+        checkpoint_file = os.path.join(
+            self.checkpointfill, "checkpoint_train.txt")
+        if os.path.exists(checkpoint_file):
+            f = open(checkpoint_file, 'r')
+            path_temp = f.read()
+            print(path_temp[:])
+            f.close()
 
-            checkpoint_file = os.path.join(
-                self.checkpointfill, "checkpoint_train.txt")
-            
-            with open(checkpoint_file, "w") as text_file:
-                text_file.write(path_file)
-            text_file.close()
+            index_data = np.where(self.listTrainFile == str(path_temp))[0][0]
+            iteration = index_data
 
-            print("data ke  %d / %d : %s" % (iteration,len(self.getlistTrain()), path_file))
-            iteration=iteration+1
+            for path_file in self.listTrainFile[index_data:]:
+                self.beginFill(path_file, 0)
+                with open(checkpoint_file, "w") as text_file:
+                    text_file.write(path_file)
+                text_file.close()
+
+                print("data ke  %d / %d : %s" %
+                      (iteration, len(self.getlistTrain()), path_file))
+
+                iteration = iteration+1
+        else:
+            for path_file in self.getlistTrain():
+                self.beginFill(path_file, 0)
+
+                with open(checkpoint_file, "w") as text_file:
+                    text_file.write(path_file)
+                text_file.close()
+
+                print("data ke  %d / %d : %s" %
+                      (iteration, len(self.getlistTrain()), path_file))
+
+                iteration = iteration+1
     """
     Original Matlab code https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html
 
