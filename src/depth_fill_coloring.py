@@ -1,10 +1,3 @@
-# Original Matlab code https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html
-#
-#
-# Python port of depth filling code from NYU toolbox
-# Speed needs to be improved
-#
-
 import scipy
 from skimage.color import rgb2gray
 import numpy as np
@@ -17,68 +10,84 @@ import cv2
 
 
 class KittiDepthFill:
-    def __init__(self,Rawpath=None,FolderDepthAnnotated=None,OutputFolder=None,checkpointfill=None):
+    def __init__(self, Rawpath=None, FolderDepthAnnotated=None, OutputFolder=None):
 
-        self.Rawpath=Rawpath
-        self.FolderDepthAnnotated=FolderDepthAnnotated
-        self.OutputFolder=OutputFolder
-        self.listTrainFile=[]
-        self.listValFile=[]
-        self.checkpointfill = checkpointfill
-    
+        self.Rawpath = Rawpath
+        self.FolderDepthAnnotated = FolderDepthAnnotated
+        self.OutputFolder = OutputFolder
+        self.listTrainFile = []
+        self.listValFile = []
+        self.checkpointfill = OutputFolder
+
+        self.scanFolder()
+
     def getlistTrain(self):
         return self.listTrainFile
 
     def getlistVal(self):
         return self.listValFile
-        
-    def beginFill(self,filenameDepth):
+
+    def beginFill(self, filenameDepth, flag):
+
         RGBPath = Path(filenameDepth)
         #extract tree folder
-        folder_rgb=RGBPath.parts[6]
-        filename_rgb=RGBPath.parts[10]
+        folder_rgb = RGBPath.parts[6]
+        filename_rgb = RGBPath.parts[10]
         rootfolder_rgb = RGBPath.parts[6][:10]
 
-        fullpath_raw=os.path.join(self.Rawpath,rootfolder_rgb)
-        fullpath_raw=os.path.join(fullpath_raw,folder_rgb)
+        fullpath_raw = os.path.join(self.Rawpath, rootfolder_rgb)
+        fullpath_raw = os.path.join(fullpath_raw, folder_rgb)
         fullpath_raw = os.path.join(fullpath_raw, "image_03/data")
-        fullpath_raw = os.path.join(fullpath_raw,filename_rgb)
+        fullpath_raw = os.path.join(fullpath_raw, filename_rgb)
         if os.path.isfile(fullpath_raw):
             filled_img = self.fill_depth_colorization(
-            imgRgb=fullpath_raw, imgDepthInput=filenameDepth)
-            cv2.imwrite(os.path.join(self.OutputFolder, filename_rgb),filled_img)
-        print(fullpath_raw)
+                imgRgb=fullpath_raw, imgDepthInput=filenameDepth)
+
+            #train
+            if flag == 0:
+                output_train = os.path.join(self.OutputFolder, "train")
+                temp = os.path.join(output_train, filename_rgb)
+
+                cv2.imwrite(temp, filled_img)
+            elif flag == 1:
+                output_val = os.path.join(self.OutputFolder, "val")
+                temp = os.path.join(output_val, filename_rgb)
+
+                cv2.imwrite(temp, filled_img)
+
 
     def scanFolder(self):
         #scan folder annotated
-        train_annotatedDepthPath=[]
-        val_annotatedDepthPath=[]        
-        folderanotasi=["train","val"]
-        counter=0
+        train_annotatedDepthPath = []
+        val_annotatedDepthPath = []
+        folderanotasi = ["train", "val"]
+        counter = 0
         for path_train in folderanotasi:
             scanFilepath = os.path.join(self.FolderDepthAnnotated, path_train)
             for folder_stage2 in os.listdir(scanFilepath):
-                if counter==0:
-                    train_annotatedDepthPath.append(os.path.join(scanFilepath, folder_stage2))
-                elif counter==1:
-                    val_annotatedDepthPath.append(os.path.join(scanFilepath, folder_stage2))
-            counter+=1
+                if counter == 0:
+                    train_annotatedDepthPath.append(
+                        os.path.join(scanFilepath, folder_stage2))
+                elif counter == 1:
+                    val_annotatedDepthPath.append(
+                        os.path.join(scanFilepath, folder_stage2))
+            counter += 1
 
         train_annotatedDepthPath.sort()
         val_annotatedDepthPath.sort()
-        
+
         #the hardest part, summoning .png files each folder
-        extra_path_annotated="proj_depth/groundtruth/image_03"
+        extra_path_annotated = "proj_depth/groundtruth/image_03"
 
         #train dataset
         for path in train_annotatedDepthPath:
-            for lidar_annotated in os.listdir(os.path.join(path,extra_path_annotated)):
+            for lidar_annotated in os.listdir(os.path.join(path, extra_path_annotated)):
                 buffer_path = os.path.join(path, extra_path_annotated)
                 #check file or directory
-                if os.path.isfile(os.path.join(buffer_path,lidar_annotated)):
-                   filenameDepth=os.path.join(buffer_path, lidar_annotated)
+                if os.path.isfile(os.path.join(buffer_path, lidar_annotated)):
+                   filenameDepth = os.path.join(buffer_path, lidar_annotated)
                    self.listTrainFile.append(filenameDepth)
-        
+
         #val dataset
         for path in val_annotatedDepthPath:
             for lidar_annotated in os.listdir(os.path.join(path, extra_path_annotated)):
@@ -90,7 +99,27 @@ class KittiDepthFill:
 
         self.listTrainFile.sort()
         self.listValFile.sort()
+
+    def fillTrain(self):
+        iteration=1
+        for path_file in self.getlistTrain():
+            self.beginFill(path_file, 0)
+
+            checkpoint_file = os.path.join(
+                self.checkpointfill, "checkpoint_train.txt")
+            
+            with open(checkpoint_file, "w") as text_file:
+                text_file.write(path_file)
+            text_file.close()
+
+            print("data ke  %d / %d : %s" % (iteration,len(self.getlistTrain()), path_file))
+            iteration=iteration+1
     """
+    Original Matlab code https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html
+
+
+    Python port of depth filling code from NYU toolbox
+    Speed needs to be improved
 
     Preprocesses the kinect depth image using a gray scale version of the
     RGB image as a weighting for the smoothing. This code is a slight
@@ -107,8 +136,7 @@ class KittiDepthFill:
 
     """
 
-
-    def fill_depth_colorization(self,imgRgb=None, imgDepthInput=None, alpha=1):
+    def fill_depth_colorization(self, imgRgb=None, imgDepthInput=None, alpha=1):
         depthImg = cv2.imread(imgDepthInput)
         depthImg = cv2.cvtColor(depthImg, cv2.COLOR_BGR2GRAY)
         rgbImg = cv2.imread(imgRgb)
@@ -150,7 +178,8 @@ class KittiDepthFill:
 
                 curVal = grayImg[i, j]
                 gvals[nWin] = curVal
-                c_var = np.mean((gvals[:nWin + 1] - np.mean(gvals[:nWin + 1])) ** 2)
+                c_var = np.mean(
+                    (gvals[:nWin + 1] - np.mean(gvals[:nWin + 1])) ** 2)
 
                 csig = c_var * 0.6
                 mgv = np.min((gvals[:nWin] - curVal) ** 2)

@@ -33,6 +33,7 @@ from . import dataset, train, weights
 from .train import SaveWeightsCallback
 from ..common.base_class import BaseClass
 from ..model import yolov4
+from AdasCarEngine.model.head import YOLOv3Head
 
 physical_devices = tf.config.experimental.list_physical_devices("GPU")
 if len(physical_devices) > 0:
@@ -63,7 +64,7 @@ class ADASEngine(BaseClass):
         backend.clear_session()
 
         # height, width, channels
-        inputs = layers.Input([self.input_size[1], self.input_size[0], 3])
+        self.inputs = layers.Input([self.input_size[1], self.input_size[0], 3])
         if self.tiny:
             self.model = yolov4.YOLOv4Tiny(
                 anchors=self.anchors,
@@ -81,7 +82,16 @@ class ADASEngine(BaseClass):
                 activation1=activation1,
                 kernel_regularizer=kernel_regularizer,
             )
-        self.model(inputs)
+        self.model(self.inputs)
+
+    def build_tflearning(self,
+                         activation0: str = "mish",
+                         activation1: str = "leaky",
+                         kernel_regularizer=tf.keras.regularizers.l2(0.0005)):
+
+        self.model.csp_darknet53.trainable = False
+        self.model.panet.trainable = False
+        self.model.summary()
 
     def load_weights(self, weights_path: str, weights_type: str = "tf"):
         """
@@ -134,7 +144,7 @@ class ADASEngine(BaseClass):
             while True:
                 images, _ = next(data_set)
                 for i in range(len(images)):
-                    yield [tf.cast(images[i : i + 1, ...], tf.float32)]
+                    yield [tf.cast(images[i: i + 1, ...], tf.float32)]
                     count += 1
                     if count >= num_calibration_steps:
                         return
@@ -177,7 +187,8 @@ class ADASEngine(BaseClass):
             grid_size = candidate.shape[1:3]
             _candidates.append(
                 tf.reshape(
-                    candidate[0], shape=(1, grid_size[0] * grid_size[1] * 3, -1)
+                    candidate[0], shape=(
+                        1, grid_size[0] * grid_size[1] * 3, -1)
                 )
             )
         return tf.concat(_candidates, axis=1)
@@ -208,7 +219,8 @@ class ADASEngine(BaseClass):
             iou_threshold=iou_threshold,
             score_threshold=score_threshold,
         )
-        pred_bboxes = self.fit_pred_bboxes_to_original(pred_bboxes, frame.shape)
+        pred_bboxes = self.fit_pred_bboxes_to_original(
+            pred_bboxes, frame.shape)
         return pred_bboxes
 
     ############
@@ -375,5 +387,6 @@ class ADASEngine(BaseClass):
                             class_name, probability, left, top, right, bottom
                         )
                     )
+
     def show_model(self):
         self.model.summary()
