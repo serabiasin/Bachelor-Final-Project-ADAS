@@ -3,6 +3,7 @@ from skimage.color import rgb2gray
 import numpy as np
 from scipy.sparse.linalg import spsolve
 from PIL import Image
+from sparse_dot_mkl import sparse_qr_solve_mkl
 import cv2
 import os
 from pathlib import Path
@@ -47,12 +48,16 @@ class KittiDepthFill:
             #train
             if flag == 0:
                 output_train = os.path.join(self.OutputFolder, "train")
-                temp = os.path.join(output_train, filename_rgb)
+                
+                namabaru_file = folder_rgb+"_"+filename_rgb
+                temp = os.path.join(output_train, namabaru_file)
 
                 cv2.imwrite(temp, filled_img)
             elif flag == 1:
                 output_val = os.path.join(self.OutputFolder, "val")
-                temp = os.path.join(output_val, filename_rgb)
+
+                namabaru_file = folder_rgb+"_"+filename_rgb
+                temp = os.path.join(output_val, namabaru_file)
 
                 cv2.imwrite(temp, filled_img)
 
@@ -240,7 +245,7 @@ class KittiDepthFill:
 
         #print ('Solving system..')
 
-        new_vals = spsolve(A, b)
+        new_vals = sparse_qr_solve_mkl(A, b)
         new_vals = np.reshape(new_vals, (H, W), 'F')
 
         #print ('Done.')
