@@ -11,7 +11,7 @@ import cv2
 
 
 class KittiDepthFill:
-    def __init__(self, Rawpath=None, FolderDepthAnnotated=None, OutputFolder=None):
+    def __init__(self, Rawpath=None, FolderDepthAnnotated=None, OutputFolder=None, ProcessedRawpath=None):
 
         self.Rawpath = Rawpath
         self.FolderDepthAnnotated = FolderDepthAnnotated
@@ -19,9 +19,12 @@ class KittiDepthFill:
         self.listTrainFile = []
         self.listValFile = []
         self.checkpointfill = OutputFolder
+        self.RGBProcessedImage = ProcessedRawpath
+        self.RGBProcessedImageTrain = []
+        self.RGBProcessedImageVal = []
 
-        print("Scan file...")
-        self.scanFolder()
+        # print("Scan file...")
+        # self.scanFolder()
 
     def getlistTrain(self):
         return self.listTrainFile
@@ -29,37 +32,66 @@ class KittiDepthFill:
     def getlistVal(self):
         return self.listValFile
 
+    def getlistRGBVal(self):
+      return self.RGBProcessedImageVal
+
     def beginFill(self, filenameDepth, flag):
 
         RGBPath = Path(filenameDepth)
+
         #extract tree folder
-        folder_rgb = RGBPath.parts[6]
-        filename_rgb = RGBPath.parts[10]
-        rootfolder_rgb = RGBPath.parts[6][:10]
+        folder_rgb = RGBPath.parts[7]
+        filename_rgb = RGBPath.parts[11]
+        rootfolder_rgb = RGBPath.parts[7][:10]
 
         fullpath_raw = os.path.join(self.Rawpath, rootfolder_rgb)
         fullpath_raw = os.path.join(fullpath_raw, folder_rgb)
         fullpath_raw = os.path.join(fullpath_raw, "image_03/data")
         fullpath_raw = os.path.join(fullpath_raw, filename_rgb)
+        print(fullpath_raw)
         if os.path.isfile(fullpath_raw):
+
             filled_img = self.fill_depth_colorization(
                 imgRgb=fullpath_raw, imgDepthInput=filenameDepth)
 
             #train
             if flag == 0:
                 output_train = os.path.join(self.OutputFolder, "train")
-                
-                namabaru_file = folder_rgb+"_"+filename_rgb
+
+                namabaru_file = folder_rgb+"###"+filename_rgb
                 temp = os.path.join(output_train, namabaru_file)
 
                 cv2.imwrite(temp, filled_img)
             elif flag == 1:
                 output_val = os.path.join(self.OutputFolder, "val")
 
-                namabaru_file = folder_rgb+"_"+filename_rgb
+                namabaru_file = folder_rgb+"###"+filename_rgb
                 temp = os.path.join(output_val, namabaru_file)
 
                 cv2.imwrite(temp, filled_img)
+        return temp
+
+    #untuk hasil depth yang sudah diproses
+    def scanFilled(self):
+        #scan folder annotated
+        filledTrain = []
+        filledVal = []
+        folderanotasi = ["train", "val"]
+        counter = 0
+
+        for path_train in folderanotasi:
+            scanFilepath = os.path.join(self.OutputFolder, path_train)
+            for folder_stage2 in os.listdir(scanFilepath):
+                if counter == 0:
+                    print(os.path.join(scanFilepath, folder_stage2))
+                    self.RGBProcessedImageTrain.append(
+                        os.path.join(scanFilepath, folder_stage2))
+                elif counter == 1:
+                    self.RGBProcessedImageVal.append(
+                        os.path.join(scanFilepath, folder_stage2))
+            counter += 1
+        self.RGBProcessedImageVal.sort()
+        self.RGBProcessedImageTrain.sort()
 
     def scanFolder(self):
         #scan folder annotated
@@ -119,30 +151,155 @@ class KittiDepthFill:
             f.close()
 
             index_data = np.where(self.listTrainFile == str(path_temp))[0][0]
-            iteration = index_data
+            iteration = index_data+1
 
             for path_file in self.listTrainFile[index_data:]:
-                self.beginFill(path_file, 0)
+                out_folder = self.beginFill(path_file, 0)
                 with open(checkpoint_file, "w") as text_file:
                     text_file.write(path_file)
                 text_file.close()
 
                 print("data ke  %d / %d : %s" %
-                      (iteration, len(self.getlistTrain()), path_file))
+                      (iteration, len(self.getlistTrain()), out_folder))
 
                 iteration = iteration+1
         else:
             for path_file in self.getlistTrain():
-                self.beginFill(path_file, 0)
+                out_folder = self.beginFill(path_file, 0)
 
                 with open(checkpoint_file, "w") as text_file:
                     text_file.write(path_file)
                 text_file.close()
 
                 print("data ke  %d / %d : %s" %
-                      (iteration, len(self.getlistTrain()), path_file))
+                      (iteration, len(self.getlistTrain()), out_folder))
 
                 iteration = iteration+1
+
+    def fillVal(self):
+        iteration = 1
+        checkpoint_file = os.path.join(
+            self.checkpointfill, "checkpoint_val.txt")
+        if os.path.exists(checkpoint_file):
+            f = open(checkpoint_file, 'r')
+            path_temp = f.read()
+            print(path_temp[:])
+            f.close()
+
+            index_data = np.where(self.listValFile == str(path_temp))[0][0]
+            iteration = index_data+1
+
+            for path_file in self.listValFile[index_data:]:
+                out_folder = self.beginFill(path_file, 1)
+                with open(checkpoint_file, "w") as text_file:
+                    text_file.write(path_file)
+                text_file.close()
+
+                print("data ke  %d / %d : %s" %
+                      (iteration, len(self.getlistVal()), out_folder))
+
+                iteration = iteration+1
+        else:
+            for path_file in self.listValFile:
+                out_folder = self.beginFill(path_file, 1)
+
+                with open(checkpoint_file, "w") as text_file:
+                    text_file.write(path_file)
+                text_file.close()
+
+                print("data ke  %d / %d : %s" %
+                      (iteration, len(self.getlistVal()), out_folder))
+
+                iteration = iteration+1
+
+    def sanityCheckTrain(self):
+        counter = 0
+        for path_file in os.listdir(os.path.join(self.OutputFolder, "train")):
+            if os.path.isfile(os.path.join(os.path.join(os.path.join(self.OutputFolder, "train"), path_file))):
+                counter = counter+1
+        print("Jumlah gambar train %d / %d" %
+              (counter+1, len(self.listTrainFile)))
+
+    def copyAndResizeImageTrain(self):
+        pass
+
+    def copyAndResizeImageVal(self):
+        iteration = 1
+        checkpoint_file = os.path.join(
+            self.checkpointfill, "resizedphoto_val.txt")
+        if os.path.exists(checkpoint_file):
+            f = open(checkpoint_file, 'r')
+            path_temp = f.read()
+            print(path_temp[:])
+            f.close()
+
+            index_data = np.where(
+                self.RGBProcessedImageVal == str(path_temp))[0][0]
+            iteration = index_data+1
+
+            for path_file in self.RGBProcessedImageVal[index_data:]:
+                out_folder = self.beginresize(path_file, 1)
+                with open(checkpoint_file, "w") as text_file:
+                    text_file.write(path_file)
+                text_file.close()
+
+                print("data ke  %d / %d : %s" %
+                      (iteration, len(self.getlistRGBVal()), out_folder))
+
+                iteration = iteration+1
+        else:
+            for path_file in self.RGBProcessedImageVal:
+                out_folder = self.beginresize(path_file, 1)
+
+                with open(checkpoint_file, "w") as text_file:
+                    text_file.write(path_file)
+                text_file.close()
+
+                print("data ke  %d / %d : %s" %
+                      (iteration, len(self.getlistRGBVal()), out_folder))
+
+                iteration = iteration+1
+
+    def beginresize(self, filenameDepth, flag, scaling=35):
+
+        RGBPath = Path(filenameDepth)
+
+        #extract tree folder
+        buffer = RGBPath.parts[-1]
+        buffer2 = buffer.split('###')
+        folder_rgb = buffer2[0]
+        filename_rgb = buffer2[1]
+        rootfolder_rgb = buffer2[0][:10]
+
+        fullpath_raw = os.path.join(self.Rawpath, rootfolder_rgb)
+        fullpath_raw = os.path.join(fullpath_raw, folder_rgb)
+        fullpath_raw = os.path.join(fullpath_raw, "image_03/data")
+        fullpath_raw = os.path.join(fullpath_raw, filename_rgb)
+        print(fullpath_raw)
+        if os.path.isfile(fullpath_raw):
+            rgbImg = cv2.imread(fullpath_raw)
+            width = 744
+            height = 224
+            dim = (width, height)
+            print(dim)
+            rgbImg = cv2.resize(rgbImg, dim, interpolation=cv2.INTER_NEAREST)
+            #train
+            if flag == 0:
+                output_train = os.path.join(self.RGBProcessedImage, "train")
+
+                namabaru_file = folder_rgb+"__"+filename_rgb
+                temp = os.path.join(output_train, namabaru_file)
+
+                cv2.imwrite(temp, rgbImg)
+            elif flag == 1:
+                output_val = os.path.join(self.RGBProcessedImage, "val")
+
+                namabaru_file = folder_rgb+"__"+filename_rgb
+                temp = os.path.join(output_val, namabaru_file)
+
+                cv2.imwrite(temp, rgbImg)
+        return temp
+
     """
     Original Matlab code https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html
 
@@ -165,10 +322,17 @@ class KittiDepthFill:
 
     """
 
-    def fill_depth_colorization(self, imgRgb=None, imgDepthInput=None, alpha=1):
+    def fill_depth_colorization(self, imgRgb=None, imgDepthInput=None, alpha=1, scaling=70):
         depthImg = cv2.imread(imgDepthInput)
         depthImg = cv2.cvtColor(depthImg, cv2.COLOR_BGR2GRAY)
         rgbImg = cv2.imread(imgRgb)
+
+        width = int(rgbImg.shape[1] * (100-scaling) / 100)
+        height = int(rgbImg.shape[0] * (100-scaling) / 100)
+        dim = (width, height)
+
+        rgbImg = cv2.resize(rgbImg, dim)
+        depthImg = cv2.resize(depthImg, dim, interpolation=cv2.INTER_NEAREST)
 
         imgIsNoise = (depthImg == 0)
         maxImgAbsDepth = np.max(depthImg)
