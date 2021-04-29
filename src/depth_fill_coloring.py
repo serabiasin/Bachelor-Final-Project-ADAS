@@ -23,6 +23,9 @@ class KittiDepthFill:
         self.RGBProcessedImageTrain = []
         self.RGBProcessedImageVal = []
 
+        self.bufferRGBProcessedImageTrain=[]
+        self.bufferRGBProcessedImageVal=[]
+
         # print("Scan file...")
         # self.scanFolder()
 
@@ -33,7 +36,47 @@ class KittiDepthFill:
         return self.listValFile
 
     def getlistRGBVal(self):
-      return self.RGBProcessedImageVal
+        return self.RGBProcessedImageVal
+
+    def getlistRGBTrain(self):
+        return self.RGBProcessedImageTrain
+
+
+    def sanityCheckTrainRGB(self):
+        counter = 0
+        for path_file in os.listdir(os.path.join(self.RGBProcessedImage, "train")):
+            if os.path.isfile(os.path.join(os.path.join(os.path.join(self.RGBProcessedImage, "train"), path_file))):
+                counter = counter+1
+                self.bufferRGBProcessedImageTrain.append(os.path.join(
+                    os.path.join(os.path.join(self.RGBProcessedImage, "train"), path_file)))
+        print("Jumlah gambar train %d / %d" %
+              (counter+1, len(self.RGBProcessedImageTrain)))
+        self.bufferRGBProcessedImageTrain.sort()
+        self.bufferRGBProcessedImageTrain = np.array(
+            self.bufferRGBProcessedImageTrain)
+        # fullpath=os.path.join(self.checkpointfill,"listProcessedRGb.txt")
+        # np.savetxt(fullpath, self.bufferRGBProcessedImageTrain, delimiter=',')
+
+    def sanityCheckValRGB(self):
+        counter = 0
+        for path_file in os.listdir(os.path.join(self.RGBProcessedImage, "val")):
+            if os.path.isfile(os.path.join(os.path.join(os.path.join(self.RGBProcessedImage, "val"), path_file))):
+                counter = counter+1
+                self.bufferRGBProcessedImageVal.append(os.path.join(
+                    os.path.join(os.path.join(self.RGBProcessedImage, "val"), path_file)))
+        print("Jumlah gambar val %d / %d" %
+              (counter+1, len(self.RGBProcessedImageVal)))
+        self.bufferRGBProcessedImageVal.sort()
+        self.bufferRGBProcessedImageVal = np.array(
+            self.bufferRGBProcessedImageVal)
+
+    def sanityCheckTrain(self):
+        counter = 0
+        for path_file in os.listdir(os.path.join(self.OutputFolder, "train")):
+            if os.path.isfile(os.path.join(os.path.join(os.path.join(self.OutputFolder, "train"), path_file))):
+                counter = counter+1
+        print("Jumlah gambar train %d / %d" %
+              (counter+1, len(self.listTrainFile)))
 
     def beginFill(self, filenameDepth, flag):
 
@@ -92,6 +135,9 @@ class KittiDepthFill:
             counter += 1
         self.RGBProcessedImageVal.sort()
         self.RGBProcessedImageTrain.sort()
+
+        self.RGBProcessedImageVal = np.array(self.RGBProcessedImageVal)
+        self.RGBProcessedImageTrain = np.array(self.RGBProcessedImageTrain)
 
     def scanFolder(self):
         #scan folder annotated
@@ -212,16 +258,43 @@ class KittiDepthFill:
 
                 iteration = iteration+1
 
-    def sanityCheckTrain(self):
-        counter = 0
-        for path_file in os.listdir(os.path.join(self.OutputFolder, "train")):
-            if os.path.isfile(os.path.join(os.path.join(os.path.join(self.OutputFolder, "train"), path_file))):
-                counter = counter+1
-        print("Jumlah gambar train %d / %d" %
-              (counter+1, len(self.listTrainFile)))
 
     def copyAndResizeImageTrain(self):
-        pass
+        iteration = 1
+        checkpoint_file = os.path.join(
+            self.checkpointfill, "resizedphoto_train.txt")
+        if os.path.exists(checkpoint_file):
+            f = open(checkpoint_file, 'r')
+            path_temp = f.read()
+            print(path_temp[:])
+            f.close()
+
+            index_data = np.where(
+                self.RGBProcessedImageTrain == str(path_temp))[0][0]
+            iteration = index_data+1
+
+            for path_file in self.RGBProcessedImageTrain[index_data:]:
+                out_folder = self.beginresize(path_file, 0)
+                with open(checkpoint_file, "w") as text_file:
+                    text_file.write(path_file)
+                text_file.close()
+
+                print("data ke  %d / %d : %s" %
+                      (iteration, len(self.getlistRGBTrain()), out_folder))
+
+                iteration = iteration+1
+        else:
+            for path_file in self.RGBProcessedImageTrain:
+                out_folder = self.beginresize(path_file, 0)
+
+                with open(checkpoint_file, "w") as text_file:
+                    text_file.write(path_file)
+                text_file.close()
+
+                print("data ke  %d / %d : %s" %
+                      (iteration, len(self.getlistRGBTrain()), out_folder))
+
+                iteration = iteration+1
 
     def copyAndResizeImageVal(self):
         iteration = 1
