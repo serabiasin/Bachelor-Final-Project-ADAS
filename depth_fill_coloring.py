@@ -23,8 +23,8 @@ class KittiDepthFill:
         self.RGBProcessedImageTrain = []
         self.RGBProcessedImageVal = []
 
-        self.bufferRGBProcessedImageTrain=[]
-        self.bufferRGBProcessedImageVal=[]
+        self.bufferRGBProcessedImageTrain = []
+        self.bufferRGBProcessedImageVal = []
 
         # print("Scan file...")
         # self.scanFolder()
@@ -40,7 +40,6 @@ class KittiDepthFill:
 
     def getlistRGBTrain(self):
         return self.RGBProcessedImageTrain
-
 
     def sanityCheckTrainRGB(self):
         counter = 0
@@ -257,7 +256,6 @@ class KittiDepthFill:
                       (iteration, len(self.getlistVal()), out_folder))
 
                 iteration = iteration+1
-
 
     def copyAndResizeImageTrain(self):
         iteration = 1
