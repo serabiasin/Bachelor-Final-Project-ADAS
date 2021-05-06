@@ -8,6 +8,7 @@ import cv2
 import os
 from pathlib import Path
 import cv2
+import pandas as pd
 
 
 class KittiDepthFill:
@@ -20,6 +21,7 @@ class KittiDepthFill:
         self.listValFile = []
         self.checkpointfill = OutputFolder
         self.RGBProcessedImage = ProcessedRawpath
+
         self.RGBProcessedImageTrain = []
         self.RGBProcessedImageVal = []
 
@@ -370,6 +372,26 @@ class KittiDepthFill:
 
                 cv2.imwrite(temp, rgbImg)
         return temp
+
+    def convertToCSV(self):
+        self.sanityCheckTrainRGB()
+        self.sanityCheckValRGB()
+        trainsumbu_y=self.RGBProcessedImageTrain
+        valsumbu_y=self.RGBProcessedImageVal
+
+        trainsumbu_x = self.bufferRGBProcessedImageTrain
+        valsumbu_x=self.bufferRGBProcessedImageVal
+        
+        df = pd.DataFrame({"X_train": trainsumbu_x, "Y_train": trainsumbu_y})
+        fullpath_training=os.path.join(self.OutputFolder,'training_path.csv')
+        df.to_csv(fullpath_training, index=False)
+        print("data saved :",fullpath_training)
+
+        df1 = pd.DataFrame({"X_val": valsumbu_x, "Y_val": valsumbu_y})
+        fullpath_validation=os.path.join(self.OutputFolder,'validation_path.csv')
+        df1.to_csv(fullpath_validation, index=False)
+        print("validation saved:",fullpath_validation)
+
 
     """
     Original Matlab code https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html
