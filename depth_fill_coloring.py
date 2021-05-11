@@ -28,10 +28,10 @@ class KittiDepthFill:
         self.bufferRGBProcessedImageTrain = []
         self.bufferRGBProcessedImageVal = []
 
-        if os.path.exists(os.path.join(self.checkpointfill,'scannedFolderTrain.npy')):
+        if os.path.exists(os.path.join(self.checkpointfill, 'scannedFolderTrain.npy')):
            self.listTrainFile = np.load(os.path.join(
-               self.checkpointfill,'scannedFolderTrain.npy'))
-               
+               self.checkpointfill, 'scannedFolderTrain.npy'))
+
         elif os.path.exists(os.path.join(self.checkpointfill, 'scannedFolderVal.npy')):
             self.listValFile = np.load(os.path.join(
                 self.checkpointfill, 'scannedFolderVal.npy'))
@@ -101,13 +101,14 @@ class KittiDepthFill:
         print(fullpath_raw)
         if os.path.isfile(fullpath_raw):
 
-            depth_img,rgb_image = self.fill_depth_colorization(
+            depth_img, rgb_image = self.fill_depth_colorization(
                 imgRgb=fullpath_raw, imgDepthInput=filenameDepth)
 
             #train
             if flag == 0:
                 output_train_depth = os.path.join(self.OutputFolder, "train")
-                output_train_rgb = os.path.join(self.RGBProcessedImage, "train")
+                output_train_rgb = os.path.join(
+                    self.RGBProcessedImage, "train")
 
                 namabaru_file = folder_rgb+"_"+filename_rgb
                 temp_rgb = os.path.join(output_train_rgb, namabaru_file)
@@ -205,14 +206,13 @@ class KittiDepthFill:
         self.listTrainFile = np.array(self.listTrainFile)
         self.listValFile = np.array(self.listValFile)
 
-               
-        os.path.join(self.checkpointfill,'scannedFolderTrain.npy')
-        
+        os.path.join(self.checkpointfill, 'scannedFolderTrain.npy')
+
         np.save(os.path.join(self.checkpointfill,
                              'scannedFolderTrain.npy'), self.listTrainFile)
-        
+
         np.save(os.path.join(
-                self.checkpointfill, 'scannedFolderVal.npy'),self.listValFile)
+                self.checkpointfill, 'scannedFolderVal.npy'), self.listValFile)
 
     def fillTrain(self):
         iteration = 1
@@ -289,22 +289,23 @@ class KittiDepthFill:
     def convertToCSV(self):
         self.sanityCheckTrainRGB()
         self.sanityCheckValRGB()
-        trainsumbu_y=self.RGBProcessedImageTrain
-        valsumbu_y=self.RGBProcessedImageVal
+        trainsumbu_y = self.RGBProcessedImageTrain
+        valsumbu_y = self.RGBProcessedImageVal
 
         trainsumbu_x = self.bufferRGBProcessedImageTrain
-        valsumbu_x=self.bufferRGBProcessedImageVal
-        
+        valsumbu_x = self.bufferRGBProcessedImageVal
+
         df = pd.DataFrame({"X_train": trainsumbu_x, "Y_train": trainsumbu_y})
-        fullpath_training=os.path.join(self.OutputFolder,'training_path.csv')
+        fullpath_training = os.path.join(
+            self.OutputFolder, 'training_path.csv')
         df.to_csv(fullpath_training, index=False)
-        print("data saved :",fullpath_training)
+        print("data saved :", fullpath_training)
 
         df1 = pd.DataFrame({"X_val": valsumbu_x, "Y_val": valsumbu_y})
-        fullpath_validation=os.path.join(self.OutputFolder,'validation_path.csv')
+        fullpath_validation = os.path.join(
+            self.OutputFolder, 'validation_path.csv')
         df1.to_csv(fullpath_validation, index=False)
-        print("validation saved:",fullpath_validation)
-
+        print("validation saved:", fullpath_validation)
 
     """
     Original Matlab code https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html
@@ -334,7 +335,7 @@ class KittiDepthFill:
         rgbImg = cv2.imread(imgRgb)
 
         width = 320
-        height =160
+        height = 160
         dim = (width, height)
 
         rgbImg = cv2.resize(rgbImg, dim)
