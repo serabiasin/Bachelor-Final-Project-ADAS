@@ -1,4 +1,3 @@
-
 import numpy as np
 import os
 import six.moves.urllib as urllib
@@ -16,7 +15,7 @@ import os
 import datetime
 from PIL import Image
 
-video_input_path = '/content/drive/MyDrive/TUGAS_AKHIR/Uji_Video/DrivinginToronto-SaturdayMorningDrive-February 2017-Front Dash Cam.mp4'
+video_input_path='/content/drive/MyDrive/TUGAS_AKHIR/Uji_Video/DrivinginToronto-SaturdayMorningDrive-February 2017-Front Dash Cam.mp4'
 
 if tf.__version__ < '1.4.0':
     raise ImportError(
@@ -39,7 +38,7 @@ frame_height = int(cap.get(4))
 
 # Define the codec and create VideoWriter object.The output is stored in 'output.avi' file.
 out = cv2.VideoWriter(FILE_OUTPUT, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
-                      15, (frame_width, frame_height))
+                      20, (frame_width, frame_height))
 
 sys.path.append("..")
 
@@ -47,29 +46,27 @@ sys.path.append("..")
 # Here are the imports from the object detection module.
 
 # Model preparation
-# Choose an option in `mobilenetv1`, `mobilenetv2` or `mobilenetv3`
-NETWORK = "mobilenetv1"
-# The network weigth file path.
-WEIGHT_FILE = "/content/drive/MyDrive/SSD-MobilenetSSD-KITTI-336.h5"
+NETWORK = "mobilenetv1" # Choose an option in `mobilenetv1`, `mobilenetv2` or `mobilenetv3`
+WEIGHT_FILE = "/content/drive/MyDrive/SSD-MobilenetSSD-KITTI-336.h5" # The network weigth file path.
+det = detector(weight_path=WEIGHT_FILE, network=NETWORK)
 
 while(cap.isOpened()):
     # Capture frame-by-frame
     ret, frame = cap.read()
 
-     #SSD MOBILENET
+            #SSD MOBILENET
 
-     #convert to PIL
-    det = detector(weight_path=WEIGHT_FILE, network=NETWORK)
+            #convert to PIL
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame = Image.fromarray(frame)
+    frame=Image.fromarray(frame)
     frame = det.detect_image(frame)
 
-         #revert back to opencv format image
-    numpy_image = np.array(frame)
-    opencv_image = cv2.cvtColor(numpy_image, cv2.COLOR_RGB2BGR)
+    #revert back to opencv format image
+    numpy_image=np.array(frame)  
+    opencv_image=cv2.cvtColor(numpy_image, cv2.COLOR_RGB2BGR) 
 
     if ret == True:
-                # Saves for video
+        # Saves for video
         out.write(opencv_image)
 
     else:

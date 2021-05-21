@@ -4,28 +4,39 @@ import numpy as np
 import os
 from tensorflow.keras.callbacks import  ModelCheckpoint, LearningRateScheduler
 from tensorflow.keras.optimizers import Adam
-# from models.ssd_mobilenetv1_300 import SSD300
-#from models.ssd_mobilenetv2_300 import SSD300
-#from models.ssd_mobilenetv3_300 import SSD300
-from models.ssd_experiment import SSD300
 from loss.ssd_loss import ssd_loss
 
 from generator import Generator
 from utils.anchors_mobilenet import get_anchors_300
 from utils.utils import BBoxUtility
 from config import config
+import argparse
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--model_load', default='mobilenetv1', type=str,
+                    help='Load architecture deep learning.')
+args = parser.parse_args()
 
 
 def learning_rate(epoch):
-    if epoch < 150:
+    if epoch < 30:
         return 1e-3
-    elif epoch>=150 and epoch<285:
+    elif epoch >= 30 and epoch < 40:
         return 1e-4
-    elif epoch>=285 and epoch<350:
+    elif epoch >= 40 and epoch < 55:
         return 1e-5
     else:
       return 1e-6
 
+
+if args.model_load == 'mobilenetv1':
+    from models.ssd_mobilenetv1_300 import SSD300
+elif args.model_load=='mobilenetv2':
+    from models.ssd_mobilenetv2_300 import SSD300
+elif args.model_load=='experiment':
+    from models.ssd_experiment import SSD300
+    
 
 gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
 for gpu in gpus:
@@ -36,8 +47,8 @@ if not os.path.exists(config.MODEL_FOLDER):
 
 if __name__ == "__main__":
 
-    priors = get_anchors_300((config.IMAGE_SIZE_300[0], config.IMAGE_SIZE_300[1]))
-    
+    priors = get_anchors_300(
+        (config.IMAGE_SIZE_300[0], config.IMAGE_SIZE_300[1]), flag_features_map=args.model_load)
     bbox_util = BBoxUtility(len(config.CLASSES), priors)
 
     model = SSD300(config.IMAGE_SIZE_300,
@@ -45,7 +56,7 @@ if __name__ == "__main__":
                     anchors=config.ANCHORS_SIZE_300,
                     variances=config.VARIANCES)
     model.summary()
-    checkpoint = ModelCheckpoint(config.MODEL_FOLDER + config.FILE_NAME + "-{epoch:02d}.h5",
+    checkpoint = ModelCheckpoint(config.MODEL_FOLDER + config.FILE_NAME+"-"+args.model_load + "-{epoch:02d}.h5",
                 monitor='val_loss', save_best_only=True, save_weights_only=True, verbose=1)
     reduce_lr = LearningRateScheduler(learning_rate, verbose=1)
     

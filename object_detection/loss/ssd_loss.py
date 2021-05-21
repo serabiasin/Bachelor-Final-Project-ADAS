@@ -13,6 +13,7 @@ class ssd_loss:
     
     def smooth_l1_loss(self, y_true, y_pred):
 
+
         absolute_loss = tf.abs(y_true - y_pred)
         sq_loss = 0.5 * (y_true - y_pred) ** 2
         l1_loss = tf.where(tf.less(absolute_loss, 1.0), sq_loss, absolute_loss - 0.5)
@@ -27,7 +28,6 @@ class ssd_loss:
 
         batch = tf.shape(y_true)[0]
         num_boxes = tf.cast(tf.shape(y_true)[1], tf.float32)
-
         
         # Conference loss
         conf_loss = self.softmax_loss(y_true[:, :, 4:-8], y_pred[:, :, 4:-8])

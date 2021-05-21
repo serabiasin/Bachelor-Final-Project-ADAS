@@ -27,6 +27,8 @@ class detector(object):
             from models.ssd_mobilenetv2_300 import SSD300
         elif network == 'mobilenetv3':
             from models.ssd_mobilenetv3_300 import SSD300
+        elif network =='experiment':
+            from models.ssd_experiment import SSD300
         else:
             raise ValueError("You need network choice `mobilenetv1`, `mobilenetv2`, `mobilenetv3`.")
         
@@ -74,7 +76,8 @@ class detector(object):
 
         boxes = ssd_correct_boxes(top_ymin, top_xmin, top_ymax, top_xmax, np.array((self.input_shape[0], self.input_shape[1])), image_shape)
         
-        font = ImageFont.truetype(font='./font/simhei.ttf',size=np.floor(3e-2 * np.shape(image)[1] + 0.5).astype('int32'))
+        font = ImageFont.truetype(
+            font='./font/simhei.ttf', size=np.floor(3e-2 * np.shape(image)[1] + 0.5).astype('int32'))
         thickness = (np.shape(image)[0] + np.shape(image)[1]) // self.input_shape[0]
         
         for i, c in enumerate(top_label_indices):

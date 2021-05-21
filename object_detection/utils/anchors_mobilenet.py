@@ -95,12 +95,23 @@ class AnchorBoxes:
 
         return prior_boxes
         
-def get_anchors_300(image_size=(300, 300), anchors=[30, 60, 111, 162, 213, 264, 315]):
+def get_anchors_300(image_size=(300, 300),flag_features_map=None, anchors=[30, 60, 111, 162, 213, 264, 315]):
 
+    print("Mode Flag: ",flag_features_map)
     if image_size != (300, 300):
         raise ValueError("This anchor need to used (300, 300).")
 
-    features_map_length = [19, 10, 5, 3, 2, 1] 
+    if flag_features_map=='mobilenetv1':
+        features_map_length = [18, 9, 5, 3, 2, 1]
+    elif flag_features_map=='mobilenetv2':
+        features_map_length = [19, 10, 5, 3, 2, 1]
+    elif flag_features_map=='experiment':
+        features_map_length = [10, 10, 5, 3, 2, 1]
+    elif flag_features_map=='efficientNet':
+        pass
+    
+
+    print(flag_features_map)
     variances = [0.1, 0.1, 0.2, 0.2]
     
     # Generate the anchor boxes. Output shape: (b, h, w, n_boxes, 8)
