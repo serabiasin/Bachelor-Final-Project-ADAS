@@ -13,7 +13,7 @@ class DataLoader():
         self.shape_depth = (80, 160, 1)
         self.read_nyu_data(csv_file, DEBUG=DEBUG)
 
-    def nyu_resize(self, img, resolution=480, padding=6):
+    def nyu_resize(self, img, resolution=160, padding=6):
         from skimage.transform import resize
         return resize(img, (resolution, int(resolution*4/3)), preserve_range=True, mode='reflect', anti_aliasing=True)
 
@@ -30,13 +30,16 @@ class DataLoader():
             nyu2_train = nyu2_train[:10]
 
         # A vector of RGB filenames.
-        self.filenames = [os.path.join(
-            '/content/DenseDepth/Tensorflow', i[0]) for i in nyu2_train]
+        self.filenames = []
+        for i in nyu2_train:
+          self.filenames.append(
+              '/content/DenseDepth/Tensorflow'+i[0])
 
         # A vector of depth filenames.
-        self.labels = [os.path.join(
-            '/content/DenseDepth/Tensorflow', i[1]) for i in nyu2_train]
-
+        self.labels = []
+        for i in nyu2_train:
+          self.labels.append(
+              '/content/DenseDepth/Tensorflow'+i[1])
         # Length of dataset
         self.length = len(self.filenames)
 
@@ -53,7 +56,7 @@ class DataLoader():
             depth_resized / 255.0, dtype=tf.float32)
 
         # Normalize the depth values (in cm)
-        depth = 1000 / tf.clip_by_value(depth * 1000, 10, 1000)
+        depth = 8000 / tf.clip_by_value(depth * 8000, 10, 8000)
 
         return rgb, depth
 

@@ -1,6 +1,6 @@
 from tensorflow.keras.layers import Conv2D, UpSampling2D, LeakyReLU, Concatenate
 from tensorflow.keras import Model
-from tensorflow.keras.applications import MobileNet
+from tensorflow.keras.applications import MobileNetV2
 
 
 class UpscaleBlock(Model):
@@ -25,13 +25,13 @@ class UpscaleBlock(Model):
 class Encoder(Model):
     def __init__(self):
         super(Encoder, self).__init__()
-        self.base_model = MobileNet(input_shape=(
+        self.base_model = MobileNetV2(input_shape=(
             None, None, 3), include_top=False, weights='imagenet')
-        print('Base model loaded {}'.format(MobileNet.__name__))
+        print('Base model loaded {}'.format(MobileNetV2.__name__))
 
         # Create encoder model that produce final features along with multiple intermediate features
         outputs = [self.base_model.outputs[-1]]
-        for name in ['conv_dw_3', 'conv_dw_5', 'conv_dw_7',  'conv1_relu']:
+        for name in ['block_2_depthwise', 'block_5_depthwise', 'block_10_depthwise',  'Conv1_relu']:
             outputs.append(self.base_model.get_layer(name).output)
         self.encoder = Model(inputs=self.base_model.inputs, outputs=outputs)
 
@@ -54,13 +54,13 @@ class Decoder(Model):
     def call(self, features):
         x, pool1, pool2, pool3, conv1 = features[0], features[1], features[2], features[3], features[4]
         up0 = self.conv2(x)
-        # print(up0)
+        # print(pool3)
         up1 = self.up1([up0, pool3])
         # print(up1)
         up2 = self.up2([up1, pool2])
         # print(up2)
         up3 = self.up3([up2, pool1])
-        print(up3)
+        # print(up3)
         up4 = self.up4([up3, conv1])
         return self.conv3(up4)
 
