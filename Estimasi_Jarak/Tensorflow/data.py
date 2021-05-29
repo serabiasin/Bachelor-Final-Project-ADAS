@@ -33,13 +33,13 @@ class DataLoader():
         self.filenames = []
         for i in nyu2_train:
           self.filenames.append(
-              '/content/DenseDepth/Tensorflow'+i[0])
+              '/kaggle/input/depth-filled-kitti'+i[0])
 
         # A vector of depth filenames.
         self.labels = []
         for i in nyu2_train:
           self.labels.append(
-              '/content/DenseDepth/Tensorflow'+i[1])
+              '/kaggle/input/depth-filled-kitti'+i[1])
         # Length of dataset
         self.length = len(self.filenames)
 
@@ -56,7 +56,7 @@ class DataLoader():
             depth_resized / 255.0, dtype=tf.float32)
 
         # Normalize the depth values (in cm)
-        depth = 8000 / tf.clip_by_value(depth * 8000, 10, 8000)
+        depth = 80.0 / tf.clip_by_value(depth * 80.0, 1.0, 80.0)
 
         return rgb, depth
 

@@ -1,6 +1,7 @@
 from tensorflow.keras.layers import Conv2D, UpSampling2D, LeakyReLU, Concatenate
 from tensorflow.keras import Model
 from tensorflow.keras.applications import MobileNetV2
+import tensorflow
 
 
 class UpscaleBlock(Model):
@@ -11,10 +12,10 @@ class UpscaleBlock(Model):
         self.concat = Concatenate(name=name+'_concat')  # Skip connection
         self.convA = Conv2D(filters=filters, kernel_size=3,
                             strides=1, padding='same', name=name+'_convA')
-        self.reluA = LeakyReLU(alpha=0.2)
+        self.reluA = LeakyReLU(alpha=0.4)
         self.convB = Conv2D(filters=filters, kernel_size=3,
                             strides=1, padding='same', name=name+'_convB')
-        self.reluB = LeakyReLU(alpha=0.2)
+        self.reluB = LeakyReLU(alpha=0.4)
 
     def call(self, x):
         b = self.reluB(self.convB(self.reluA(
@@ -31,8 +32,15 @@ class Encoder(Model):
 
         # Create encoder model that produce final features along with multiple intermediate features
         outputs = [self.base_model.outputs[-1]]
-        for name in ['block_2_depthwise', 'block_5_depthwise', 'block_10_depthwise',  'Conv1_relu']:
+        #New
+        upsample_layer = ['block_12_expand', 'block_12_project',
+                          'block_5_expand','block_5_project',
+                          'block_2_expand', 'block_2_project',  
+                          'Conv1_relu']
+        for name in upsample_layer:
+
             outputs.append(self.base_model.get_layer(name).output)
+
         self.encoder = Model(inputs=self.base_model.inputs, outputs=outputs)
 
     def call(self, x):
@@ -44,24 +52,38 @@ class Decoder(Model):
         super(Decoder, self).__init__()
         self.conv2 = Conv2D(filters=decode_filters,
                             kernel_size=1, padding='same', name='conv2')
-        self.up1 = UpscaleBlock(filters=decode_filters//2,  name='up1')
-        self.up2 = UpscaleBlock(filters=decode_filters//4,  name='up2')
-        self.up3 = UpscaleBlock(filters=decode_filters//8,  name='up3')
+        self.up1_1 = UpscaleBlock(filters=decode_filters//2,  name='up1')
+        self.up1_2 = UpscaleBlock(filters=decode_filters//2,  name='up1')
+
+        self.up2_1 = UpscaleBlock(filters=decode_filters//4,  name='up2')
+        self.up2_2 = UpscaleBlock(filters=decode_filters//4,  name='up2')
+        
+        self.up3_1 = UpscaleBlock(filters=decode_filters//8,  name='up3')
+        self.up3_2 = UpscaleBlock(filters=decode_filters//8,  name='up3')
+        
         self.up4 = UpscaleBlock(filters=decode_filters//16, name='up4')
         self.conv3 = Conv2D(filters=1, kernel_size=3,
                             strides=1, padding='same', name='conv3')
 
     def call(self, features):
-        x, pool1, pool2, pool3, conv1 = features[0], features[1], features[2], features[3], features[4]
+        x, expand12, project12, expand5, project5, expand10, project10, conv1 = features[0], features[
+            1], features[2], features[3], features[4], features[5], features[6], features[7]
         up0 = self.conv2(x)
-        # print(pool3)
-        up1 = self.up1([up0, pool3])
-        # print(up1)
-        up2 = self.up2([up1, pool2])
+        # print(up0)
+        up1_1 = self.up1_1([up0, expand12])
+        up1_2 = self.up1_2([up0, project12])
+        up1_3 = tensorflow.keras.layers.Add()([up1_1, up1_2])
+        # print(up1_3)
+        # print(up1_2)
+        up2_1 = self.up2_1([up1_3, expand5])
+        up2_2 = self.up2_2([up1_3, project5])
+        up2_3 = tensorflow.keras.layers.Add()([up2_1, up2_2])
         # print(up2)
-        up3 = self.up3([up2, pool1])
-        # print(up3)
-        up4 = self.up4([up3, conv1])
+        up3_1 = self.up3_1([up2_3, expand10])
+        up3_2 = self.up3_2([up2_3, project10])
+        up3_3 = tensorflow.keras.layers.Add()([up3_1, up3_2])
+        # print(up2_3)
+        up4 = self.up4([up3_3, conv1])
         return self.conv3(up4)
 
 
