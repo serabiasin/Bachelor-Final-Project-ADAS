@@ -33,9 +33,9 @@ class Encoder(Model):
         # Create encoder model that produce final features along with multiple intermediate features
         outputs = [self.base_model.outputs[-1]]
         #New
-        upsample_layer = ['block_12_expand', 'block_12_project',
-                          'block_5_expand','block_5_project',
-                          'block_2_expand', 'block_2_project',  
+        upsample_layer = ['block_12_depthwise', 'block_12_project',
+                          'block_5_depthwise', 'block_5_project',
+                          'block_2_depthwise', 'block_2_project',
                           'Conv1_relu']
         for name in upsample_layer:
 
@@ -57,10 +57,10 @@ class Decoder(Model):
 
         self.up2_1 = UpscaleBlock(filters=decode_filters//4,  name='up2')
         self.up2_2 = UpscaleBlock(filters=decode_filters//4,  name='up2')
-        
+
         self.up3_1 = UpscaleBlock(filters=decode_filters//8,  name='up3')
         self.up3_2 = UpscaleBlock(filters=decode_filters//8,  name='up3')
-        
+
         self.up4 = UpscaleBlock(filters=decode_filters//16, name='up4')
         self.conv3 = Conv2D(filters=1, kernel_size=3,
                             strides=1, padding='same', name='conv3')
