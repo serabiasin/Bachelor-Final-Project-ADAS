@@ -3,12 +3,14 @@ from skimage.color import rgb2gray
 import numpy as np
 from scipy.sparse.linalg import spsolve
 from PIL import Image
-from sparse_dot_mkl import sparse_qr_solve_mkl
 import cv2
 import os
 from pathlib import Path
 import cv2
 import pandas as pd
+from joblib import Parallel, delayed
+
+num_threads = 2
 
 
 class KittiDepthFill:
@@ -32,7 +34,7 @@ class KittiDepthFill:
            self.listTrainFile = np.load(os.path.join(
                self.checkpointfill, 'scannedFolderTrain.npy'))
 
-        elif os.path.exists(os.path.join(self.checkpointfill, 'scannedFolderVal.npy')):
+        if os.path.exists(os.path.join(self.checkpointfill, 'scannedFolderVal.npy')):
             self.listValFile = np.load(os.path.join(
                 self.checkpointfill, 'scannedFolderVal.npy'))
         else:
@@ -90,20 +92,26 @@ class KittiDepthFill:
         RGBPath = Path(filenameDepth)
 
         #extract tree folder
-        folder_rgb = RGBPath.parts[7]
-        filename_rgb = RGBPath.parts[11]
-        rootfolder_rgb = RGBPath.parts[7][:10]
+        folder_rgb = RGBPath.parts[5]
+        filename_rgb = RGBPath.parts[9]
+        rootfolder_rgb = RGBPath.parts[5][:10]
 
         fullpath_raw = os.path.join(self.Rawpath, rootfolder_rgb)
         fullpath_raw = os.path.join(fullpath_raw, folder_rgb)
         fullpath_raw = os.path.join(fullpath_raw, "image_03/data")
         fullpath_raw = os.path.join(fullpath_raw, filename_rgb)
         print(fullpath_raw)
+        if flag == 0:
+            checkpoint_file = os.path.join(
+                self.checkpointfill, "checkpoint_train.txt")
+        elif flag == 1:
+            checkpoint_file = os.path.join(
+                self.checkpointfill, "checkpoint_val.txt")
+
         if os.path.isfile(fullpath_raw):
 
             depth_img, rgb_image = self.fill_depth_colorization(
                 imgRgb=fullpath_raw, imgDepthInput=filenameDepth)
-
             #train
             if flag == 0:
                 output_train_depth = os.path.join(self.OutputFolder, "train")
@@ -131,6 +139,10 @@ class KittiDepthFill:
 
                 cv2.imwrite(temp_rgb, rgb_image)
                 cv2.imwrite(temp_depth, depth_img)
+            print(temp_rgb)
+            with open(checkpoint_file, "w") as text_file:
+                text_file.write(filenameDepth)
+            text_file.close()
 
         return temp_rgb
 
@@ -224,31 +236,16 @@ class KittiDepthFill:
             print(path_temp[:])
             f.close()
 
+            print(path_temp)
             index_data = np.where(self.listTrainFile == str(path_temp))[0][0]
             iteration = index_data+1
 
-            for path_file in self.listTrainFile[index_data:]:
-                out_folder = self.beginFill(path_file, 0)
-                with open(checkpoint_file, "w") as text_file:
-                    text_file.write(path_file)
-                text_file.close()
+            Parallel(num_threads, 'loky', verbose=12)(delayed(self.beginFill)(
+                path_file, 0) for path_file in self.listTrainFile[index_data:])
 
-                print("data ke  %d / %d : %s" %
-                      (iteration, len(self.getlistTrain()), out_folder))
-
-                iteration = iteration+1
         else:
-            for path_file in self.getlistTrain():
-                out_folder = self.beginFill(path_file, 0)
-
-                with open(checkpoint_file, "w") as text_file:
-                    text_file.write(path_file)
-                text_file.close()
-
-                print("data ke  %d / %d : %s" %
-                      (iteration, len(self.getlistTrain()), out_folder))
-
-                iteration = iteration+1
+            Parallel(num_threads, 'loky', verbose=12)(delayed(self.beginFill)(
+                path_file, 0) for path_file in self.listTrainFile)
 
     def fillVal(self):
         iteration = 1
@@ -262,40 +259,28 @@ class KittiDepthFill:
 
             index_data = np.where(self.listValFile == str(path_temp))[0][0]
             iteration = index_data+1
+            Parallel(num_threads, 'loky', verbose=12)(delayed(self.beginFill)(
+                path_file, 1) for path_file in self.listValFile[index_data:])
 
-            for path_file in self.listValFile[index_data:]:
-                out_folder = self.beginFill(path_file, 1)
-                with open(checkpoint_file, "w") as text_file:
-                    text_file.write(path_file)
-                text_file.close()
-
-                print("data ke  %d / %d : %s" %
-                      (iteration, len(self.getlistVal()), out_folder))
-
-                iteration = iteration+1
         else:
-            for path_file in self.listValFile:
-                out_folder = self.beginFill(path_file, 1)
 
-                with open(checkpoint_file, "w") as text_file:
-                    text_file.write(path_file)
-                text_file.close()
-
-                print("data ke  %d / %d : %s" %
-                      (iteration, len(self.getlistVal()), out_folder))
-
-                iteration = iteration+1
+            Parallel(num_threads, 'loky', verbose=12)(
+                delayed(self.beginFill)(path_file, 1) for path_file in self.listValFile)
 
     def convertToCSV(self):
         self.sanityCheckTrainRGB()
         self.sanityCheckValRGB()
+        self.scanFilled()
         trainsumbu_y = self.RGBProcessedImageTrain
         valsumbu_y = self.RGBProcessedImageVal
 
         trainsumbu_x = self.bufferRGBProcessedImageTrain
         valsumbu_x = self.bufferRGBProcessedImageVal
 
-        df = pd.DataFrame({"X_train": trainsumbu_x, "Y_train": trainsumbu_y})
+        print(trainsumbu_x.shape, trainsumbu_y.shape)
+        print(valsumbu_x.shape, valsumbu_y.shape)
+        df = pd.DataFrame(
+            {"X_train": trainsumbu_x, "Y_train": trainsumbu_y[:42946]})
         fullpath_training = os.path.join(
             self.OutputFolder, 'training_path.csv')
         df.to_csv(fullpath_training, index=False)
@@ -334,8 +319,8 @@ class KittiDepthFill:
         depthImg = cv2.cvtColor(depthImg, cv2.COLOR_BGR2GRAY)
         rgbImg = cv2.imread(imgRgb)
 
-        width = 320
-        height = 160
+        width = 640
+        height = 480
         dim = (width, height)
 
         rgbImg = cv2.resize(rgbImg, dim)
@@ -416,7 +401,7 @@ class KittiDepthFill:
 
         #print ('Solving system..')
 
-        new_vals = sparse_qr_solve_mkl(A, b)
+        new_vals = spsolve(A, b)
         new_vals = np.reshape(new_vals, (H, W), 'F')
 
         #print ('Done.')
