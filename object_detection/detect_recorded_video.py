@@ -15,13 +15,18 @@ import os
 import datetime
 from PIL import Image
 
-video_input_path='/content/drive/MyDrive/TUGAS_AKHIR/Uji_Video/DrivinginToronto-SaturdayMorningDrive-February 2017-Front Dash Cam.mp4'
+video_input_path='/floyd/home/DrivinginToronto-SaturdayMorningDrive-February 2017-Front Dash Cam.mp4'
 
 if tf.__version__ < '1.4.0':
     raise ImportError(
         'Please upgrade your tensorflow installation to v1.4.* or later!')
 
-FILE_OUTPUT = '/content/drive/MyDrive/DrivinginToronto-SaturdayMorningDrive-February2017-FrontDashCam.avi'
+FILE_OUTPUT = '/floyd/home/DrivinginToronto-SaturdayMorningDrive-February2017-FrontDashCam_Result.avi'
+
+# tf.config.set_visible_devices([], 'GPU')
+# visible_devices = tf.config.get_visible_devices()
+# for device in visible_devices:
+#     assert device.device_type != "GPU"
 
 # Checks and deletes the output file
 # You cant have a existing file or it will through an error
@@ -37,19 +42,17 @@ frame_width = int(cap.get(3))
 frame_height = int(cap.get(4))
 
 # Define the codec and create VideoWriter object.The output is stored in 'output.avi' file.
-out = cv2.VideoWriter(FILE_OUTPUT, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'),
-                      20, (frame_width, frame_height))
+out = cv2.VideoWriter(FILE_OUTPUT, cv2.VideoWriter_fourcc(*'mp4v'),
+                      30, (frame_width, frame_height))
 
 sys.path.append("..")
-
 # Object detection imports
 # Here are the imports from the object detection module.
 
 # Model preparation
-NETWORK = "mobilenetv1" # Choose an option in `mobilenetv1`, `mobilenetv2` or `mobilenetv3`
-WEIGHT_FILE = "/content/drive/MyDrive/SSD-MobilenetSSD-KITTI-336.h5" # The network weigth file path.
+NETWORK = "experiment" # Choose an option in `mobilenetv1`, `mobilenetv2` or `mobilenetv3`
+WEIGHT_FILE = "/floyd/home/object_detection/weights/SSD-KITTI-Experiment-experiment-58.h5" # The network weigth file path.
 det = detector(weight_path=WEIGHT_FILE, network=NETWORK)
-
 while(cap.isOpened()):
     # Capture frame-by-frame
     ret, frame = cap.read()
@@ -57,9 +60,12 @@ while(cap.isOpened()):
             #SSD MOBILENET
 
             #convert to PIL
+
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     frame=Image.fromarray(frame)
     frame = det.detect_image(frame)
+    print(det.detected_bbox(frame))
+    
 
     #revert back to opencv format image
     numpy_image=np.array(frame)  
@@ -72,6 +78,6 @@ while(cap.isOpened()):
     else:
         break
 
-    # When everything done, release the video capture and video write objects
+# When everything done, release the video capture and video write objects
 cap.release()
 out.release()

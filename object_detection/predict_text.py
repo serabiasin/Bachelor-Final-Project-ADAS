@@ -2,10 +2,17 @@ from ssd_predict import detector
 from PIL import Image
 import tensorflow as tf
 import os
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--model', default='experiment', type=str,
+                    help='Load architecture deep learning.')
+parser.add_argument('--input', default='examples/*.png',
+                    type=str, help='weight path for continue learning')
+args = parser.parse_args()
 ###########################
-NETWORK = "mobilenetv1" # Choose an option in `mobilenetv1`, `mobilenetv2` or `mobilenetv3`
-WEIGHT_FILE = "" # The network weigth file path.
+NETWORK = args.model # Choose an option in `mobilenetv1`, `mobilenetv2` or `mobilenetv3`
+WEIGHT_FILE = args.input # The network weigth file path.
 ###########################
 
 if not os.path.exists("results"):
@@ -19,7 +26,7 @@ for device in visible_devices:
 det = detector(weight_path=WEIGHT_FILE, network=NETWORK)
 
 predicts = []
-with open("test.txt") as f:
+with open("val.txt") as f:
     line = f.readline()
     while line:
         l = line.split()
@@ -41,3 +48,4 @@ for index, pre in enumerate(predicts):
     result_file.write("\n")
     
 result_file.close()
+print(os.path.join("results", "{}_result.txt".format(NETWORK)))

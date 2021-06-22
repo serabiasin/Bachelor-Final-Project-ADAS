@@ -26,12 +26,12 @@ def SSD300(img_size, n_classes, l2_reg=5e-4,
     # Build network
 
     temp = tf.keras.applications.MobileNetV2(
-        input_shape=(img_size), include_top=False, weights='imagenet')
+        input_shape=(img_size), include_top=False, weights=None)
     base_network = Model(
         inputs=temp.input, outputs=temp.get_layer("out_relu").output)
 
     conv4_3_norm = Normalize(
-        20, name='conv4_3_norm')(base_network.get_layer('block_15_depthwise').output)
+        20, name='conv4_3_norm')(base_network.get_layer('block_12_depthwise').output)
         
     conv6_1 = ssd_convolution(base_network.get_layer(
         "block_16_depthwise").output, 256, (1, 1), padding='same', name='conv6_1')

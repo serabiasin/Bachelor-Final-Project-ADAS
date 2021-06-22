@@ -23,6 +23,8 @@ class detector(object):
         
         if network == 'mobilenetv1':
             from models.ssd_mobilenetv1_300 import SSD300
+        elif network=='mobilenetv1_old':
+            from models.ssd_mobilenetv1_300_old import SSD300
         elif network == 'mobilenetv2':
             from models.ssd_mobilenetv2_300 import SSD300
         elif network == 'mobilenetv3':
@@ -145,8 +147,11 @@ class detector(object):
         top_ymax = np.expand_dims(det_ymax[top_indices], axis=-1)
 
         boxes = ssd_correct_boxes(top_ymin, top_xmin, top_ymax, top_xmax, np.array((self.input_shape[0], self.input_shape[1])), image_shape)
-        
+        boxes_depth=ssd_correct_boxes(top_ymin, top_xmin, top_ymax, top_xmax, np.array((480, 640)), image_shape)
+
         predict_results = []
+        predict_depth=[] #untuk mencari centerpoint buat memperoleh jarak dari depth image
+
         for i, c in enumerate(top_label_indices):
 
             predicted_class = int(c) - 1

@@ -1,6 +1,23 @@
 import xml.etree.ElementTree as ET
 from config import config
 import numpy as np
+import argparse
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--dataset', default='default',
+                    type=str, help='Dataset type to config')
+args = parser.parse_args()
+
+if args.dataset=='default':
+    print("default loaded")
+    from config import config
+elif args.dataset=='kitti_pascal':
+    print('Kitti Pascal loaded')
+    from config_kittipascal import config
+elif args.dataset=='pascal':
+    print('Pascal loaded')
+    from config_voc import config
 
 def convert_annotation(xml_file, text_file):
 
@@ -28,7 +45,7 @@ if __name__ == "__main__":
         
         for line in lines:
             print(line)
-            f.write(config.DATASET[0] + "JPEGImages/" + line + ".png")
-            convert_annotation(config.DATASET[0] + "Annotations/" + line + ".xml", f)
+            f.write(config.DATASET[0] + "JPEGImages/" + line[:-4] + ".jpg")
+            convert_annotation(config.DATASET[0] + "Annotations/" + line[:-4] + ".xml", f)
             f.write("\n")
         f.close()

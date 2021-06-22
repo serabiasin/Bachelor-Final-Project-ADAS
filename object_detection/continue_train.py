@@ -5,13 +5,13 @@ import os
 from tensorflow.keras.callbacks import  ModelCheckpoint, LearningRateScheduler
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adagrad
 from loss.ssd_loss import ssd_loss
 import argparse
 
 from generator import Generator
 from utils.anchors_mobilenet import get_anchors_300
 from utils.utils import BBoxUtility
-from config import config
 
 
 parser = argparse.ArgumentParser()
@@ -21,14 +21,38 @@ parser.add_argument('--input', default='examples/*.png',
                     type=str, help='weight path for continue learning')
 parser.add_argument('--lastepoch', default='1',
                     type=str, help='last Epoch')
+parser.add_argument('--dataset', default='default',
+                    type=str, help='Dataset type to config')
 args = parser.parse_args()
 
+if args.dataset == 'default':
+    print("default loaded")
+    from config import config
+elif args.dataset == 'kitti_pascal':
+    print('Kitti Pascal loaded')
+    from config_kittipascal import config
+elif args.dataset == 'pascal':
+    print('Pascal loaded')
+    from config_voc import config
+
+
+## khusus kitti dataset only
+# def learning_rate(epoch):
+#     if epoch < 85:
+#         return 1e-5
+#     elif epoch >= 85 and epoch < 115:
+#         return 1e-6
+#     elif epoch >= 115 and epoch < 200:
+#         return 1e-7
+#     else:
+#       return 1e-8
+
 def learning_rate(epoch):
-    if epoch < 50:
+    if epoch < 85:
         return 1e-3
-    elif epoch >= 50 and epoch < 100:
+    elif epoch >= 85 and epoch < 115:
         return 1e-4
-    elif epoch >= 100 and epoch < 150:
+    elif epoch >= 115 and epoch < 200:
         return 1e-5
     else:
       return 1e-6
@@ -45,12 +69,16 @@ if __name__ == "__main__":
     checkpoint_file = args.input
     if args.model == 'mobilenetv1':
         from models.ssd_mobilenetv1_300 import SSD300
+    elif args.model == 'mobilenetv1_old':
+        from models.ssd_mobilenetv1_300_old import SSD300
     elif args.model == 'mobilenetv2':
         from models.ssd_mobilenetv2_300 import SSD300
     elif args.model == 'mobilenetv3':
         from models.ssd_mobilenetv3_300 import SSD300
     elif args.model == 'experiment':
-        from models.ssd_experiment import SSD300        
+        from models.ssd_experiment import SSD300
+    elif args.model == 'efficientnet':
+        from models.ssd_efficientnetb0 import SSD300
         
     priors = get_anchors_300((config.IMAGE_SIZE_300[0], config.IMAGE_SIZE_300[1]),flag_features_map=args.model)
     
@@ -81,7 +109,8 @@ if __name__ == "__main__":
 
     gen = Generator(bbox_util, config.BATCH_SIZE, lines, val_lines, (config.IMAGE_SIZE_300[0], config.IMAGE_SIZE_300[1]), len(config.CLASSES))
 
-    model.compile(optimizer=Adam(), loss=ssd_loss(len(config.CLASSES)).compute_loss)
+    model.compile(optimizer=Adam(), loss=ssd_loss(
+        len(config.CLASSES)).compute_loss)
 
 
     if checkpoint_file is not None:

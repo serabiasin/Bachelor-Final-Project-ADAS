@@ -103,13 +103,14 @@ def get_anchors_300(image_size=(300, 300),flag_features_map=None, anchors=[30, 6
 
     if flag_features_map=='mobilenetv1':
         features_map_length = [18, 9, 5, 3, 2, 1]
+    elif flag_features_map=='mobilenetv1_old':
+        features_map_length = [19, 10, 5, 3, 2, 1]
     elif flag_features_map=='mobilenetv2':
         features_map_length = [19, 10, 5, 3, 2, 1]
     elif flag_features_map=='experiment':
+        features_map_length = [19, 10, 5, 3, 2, 1]
+    elif flag_features_map=='efficientnet':
         features_map_length = [10, 10, 5, 3, 2, 1]
-    elif flag_features_map=='efficientNet':
-        pass
-    
 
     print(flag_features_map)
     variances = [0.1, 0.1, 0.2, 0.2]
