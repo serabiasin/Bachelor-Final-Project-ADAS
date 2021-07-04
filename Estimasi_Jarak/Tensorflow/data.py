@@ -9,11 +9,11 @@ import os
 class DataLoader():
     def __init__(self, csv_file='data/nyu2_train.csv', DEBUG=False):
         #height,width,channel
-        self.shape_rgb = (160, 320, 3)
-        self.shape_depth = (80, 160, 1)
+        self.shape_rgb = (480, 640, 3)
+        self.shape_depth = (240, 320, 1)
         self.read_nyu_data(csv_file, DEBUG=DEBUG)
 
-    def nyu_resize(self, img, resolution=160, padding=6):
+    def nyu_resize(self, img, resolution=480, padding=6):
         from skimage.transform import resize
         return resize(img, (resolution, int(resolution*4/3)), preserve_range=True, mode='reflect', anti_aliasing=True)
 
@@ -33,13 +33,13 @@ class DataLoader():
         self.filenames = []
         for i in nyu2_train:
           self.filenames.append(
-              '/kaggle/input/depth-filled-kitti'+i[0])
+              '/kaggle/input/kitti-depth-dataset'+i[0])
 
         # A vector of depth filenames.
         self.labels = []
         for i in nyu2_train:
           self.labels.append(
-              '/kaggle/input/depth-filled-kitti'+i[1])
+              '/kaggle/input/kitti-depth-dataset'+i[1])
         # Length of dataset
         self.length = len(self.filenames)
 
@@ -52,14 +52,17 @@ class DataLoader():
 
         # Format
         rgb = tf.image.convert_image_dtype(image_decoded, dtype=tf.float32)
-        depth = tf.image.convert_image_dtype(
-            depth_resized / 255.0, dtype=tf.float32)
+        rgb = tf.clip_by_value(rgb/255, 0, 1)
+        # depth = tf.image.convert_image_dtype(
+        #     depth_resized / 255.0, dtype=tf.float32)
 
-        # Normalize the depth values (in cm)
-        depth = 80.0 / tf.clip_by_value(depth * 80.0, 1.0, 80.0)
+        # Normalize the depth values (in m)
+        # depth = 80.0 / tf.clip_by_value(depth * 80.0, 1.0, 80.0)
+
+        depth = 80.0 / tf.clip_by_value(depth_resized, 1.0, 80.0)
 
         return rgb, depth
-
+        
     def get_batched_dataset(self, batch_size):
         self.dataset = tf.data.Dataset.from_tensor_slices(
             (self.filenames, self.labels))
