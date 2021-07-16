@@ -8,7 +8,6 @@ class config:
     VARIANCES = [0.1, 0.1, 0.2, 0.2]
 
     CLASSES = [ 'car', 'person', 'Tram']
-    
     DATASET = ["/kaggle/input/kitti-pascal-kaggle/"]
     # Dataset train, val, test images information.
     VOC_TEXT_FILE = ["/kaggle/input/kitti-pascal-kaggle/ImageSets/Main/training.txt",

@@ -10,8 +10,8 @@ from loss.ssd_loss import ssd_loss
 import argparse
 
 from generator import Generator
-from utils.anchors_mobilenet import get_anchors_300
-from utils.utils import BBoxUtility
+from utils_object.anchors_mobilenet import get_anchors_300
+from utils_object.utils import BBoxUtility
 
 
 parser = argparse.ArgumentParser()
@@ -47,15 +47,28 @@ elif args.dataset == 'pascal':
 #     else:
 #       return 1e-8
 
+#EfficientNet and VGGNET
 def learning_rate(epoch):
-    if epoch < 85:
+    if epoch < 50:
         return 1e-3
-    elif epoch >= 85 and epoch < 115:
+    elif epoch >= 50 and epoch < 95:
         return 1e-4
-    elif epoch >= 115 and epoch < 200:
+    elif epoch >= 95 and epoch < 120:
         return 1e-5
     else:
       return 1e-6
+
+
+# Normal
+# def learning_rate(epoch):
+#     if epoch < 85:
+#         return 1e-3
+#     elif epoch >= 85 and epoch < 115:
+#         return 1e-4
+#     elif epoch >= 115 and epoch < 200:
+#         return 1e-5
+#     else:
+#       return 1e-6
 
 gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
 for gpu in gpus:
@@ -67,6 +80,7 @@ if not os.path.exists(config.MODEL_FOLDER):
 if __name__ == "__main__":
     last_epoch = int(args.lastepoch)
     checkpoint_file = args.input
+    
     if args.model == 'mobilenetv1':
         from models.ssd_mobilenetv1_300 import SSD300
     elif args.model == 'mobilenetv1_old':
@@ -79,6 +93,8 @@ if __name__ == "__main__":
         from models.ssd_experiment import SSD300
     elif args.model == 'efficientnet':
         from models.ssd_efficientnetb0 import SSD300
+    elif args.model=='vggnet16':
+        from models.ssd_vggnet16 import SSD300
         
     priors = get_anchors_300((config.IMAGE_SIZE_300[0], config.IMAGE_SIZE_300[1]),flag_features_map=args.model)
     

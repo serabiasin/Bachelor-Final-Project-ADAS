@@ -8,8 +8,8 @@ from tensorflow.keras.optimizers import Adam
 from loss.ssd_loss import ssd_loss
 
 from generator import Generator
-from utils.anchors_mobilenet import get_anchors_300
-from utils.utils import BBoxUtility
+from utils_object.anchors_mobilenet import get_anchors_300
+from utils_object.utils import BBoxUtility
 from config import config
 import argparse
 
@@ -44,9 +44,11 @@ elif args.model == 'experiment':
     from models.ssd_experiment import SSD300
 elif args.model=='efficientnet':
     from models.ssd_efficientnetb0 import SSD300
+elif args.model=='vggnet16':
+    from models.ssd_vggnet16 import SSD300
 
 
-## khusus kitti dataset only
+## khusus kitti dataset only and mobilenet mode
 # def learning_rate(epoch):
 #     if epoch < 85:
 #         return 1e-5

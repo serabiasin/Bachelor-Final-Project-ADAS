@@ -87,8 +87,8 @@ def compute_average_precision(init_file, result_file):
     pre = TP/(TP+FP)
     recall = TP / NUM_ANNOTATION
 
-    pre = pre[np.isfinite(pre)]
-    recall = recall[np.isfinite(recall)]
+    pre = np.nan_to_num(pre)
+    recall = np.nan_to_num(recall)
     print(recall)
     print(pre)
     print("AP:{:.2f}".format(compute_ap(recall, pre)))
