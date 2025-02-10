@@ -100,6 +100,7 @@ class AnchorBoxes(Layer):
         prior_boxes = np.minimum(np.maximum(prior_boxes, 0.0), 1.0)
 
         num_boxes = len(prior_boxes)
+        self.n_boxes = len(prior_boxes)
 
         if len(self.variances) == 1:
             variances = np.ones((num_boxes, 4)) * self.variances[0]
